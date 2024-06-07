@@ -11,7 +11,10 @@ class CreateBookRequest:
     title: str
     author: str
     kind: str
-
+@dataclass
+class SearchBookRequest:
+    author: str | None = None
+    kind: str | None = None
 
 class BookController:
     def __init__(self, repository: BookRepository) -> None:
@@ -23,5 +26,9 @@ class BookController:
         )
         self._repository.create(repository_req)
 
-    def get(self) -> None:
-        return self._repository.get()
+    def get(self,title=None) -> list[dict]:
+        return self._repository.get(title=title)
+
+    def search(self, author: str = None, kind: str = None) -> list[dict]:
+        search_params = SearchBookRequest(author=author, kind=kind)
+        return self._repository.search(search_params)

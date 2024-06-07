@@ -1,20 +1,9 @@
-from dataclasses import dataclass
 from typing import Generator
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from src.db_models import Author, Kind,Book
 from src.db_flask import SessionFactory
-
-books = []
-
-
-@dataclass
-class CreateBookInDBRequest:
-    title:str
-    author:str
-    kind:str
-
 
 class BookRepository:
     def __init__(self, session_factory: SessionFactory) -> None:
@@ -25,21 +14,21 @@ class BookRepository:
             yield session
 
     def create_author(self, author: str) -> Author:
-        author=self._session.query(Author).filter_by(name=author).first()
-        if not author:
-            author = Author(name=author.name)
-            self._session.add(author)
+        author_q=self._session.query(Author).filter_by(name=author).first()
+        if not author_q:
+            author_q = Author(name=author)
+            self._session.add(author_q)
             self._session.commit()
-        return author
+        return author_q
 
     def create_kind(self, kind: str) -> Kind:
-        kind=self._session.query(Kind).filter_by(name=kind).first()
-        if not kind:
-            kind = Kind(name=kind.name)
-            self._session.add(kind)
+        kind_q=self._session.query(Kind).filter_by(name=kind).first()
+        if not kind_q:
+            kind_q = Kind(name=kind)
+            self._session.add(kind_q)
             self._session.commit()
 
-        return kind
+        return kind_q
 
 
 
@@ -52,8 +41,19 @@ class BookRepository:
         self._session.add(book)
         self._session.commit()
 
-    def get(self):
-        result = self._session.query(Book).all()
-        print(result)
-        print([i.get_dict() for i in result])
-        return result
+    def get(self, title=None) -> list[dict]:
+        if title:
+            result = self._session.query(Book).options(joinedload(Book.author), joinedload(Book.kind)).filter(
+                Book.title == title).all()
+        else:
+            result = self._session.query(Book).options(joinedload(Book.author), joinedload(Book.kind)).all()
+        return [i.get_dict() for i in result]
+
+    def search(self,search_params) -> list[dict]:
+        query = self._session.query(Book)
+        if search_params.author:
+            query = query.join(Author).filter(Author.name == search_params.author)
+        if search_params.kind:
+            query = query.join(Kind).filter(Kind.name == search_params.kind)
+        result = query.all()
+        return [i.get_dict() for i in result]

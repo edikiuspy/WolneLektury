@@ -9,7 +9,6 @@ class Author(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
 
-
 class Kind(Base):
     __tablename__ = 'kinds'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -30,4 +29,6 @@ class Book(Base):
     def get_dict(self) -> dict:
         book_dict = self.__dict__
         book_dict.pop('_sa_instance_state')
+        book_dict['author'] = self.author.name
+        book_dict['kind'] = self.kind.name
         return book_dict

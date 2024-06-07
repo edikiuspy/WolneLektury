@@ -22,9 +22,16 @@ class BookView(MethodView):
         except NotImplementedError:
             pass
         return Response(status=201)
-    def get(self) -> Response:
-        try:
-            self._controller.get()
-        except NotImplementedError:
-            pass
-        return Response(status=201)
+    def get(self,**kwargs) -> tuple[list[dict], int]:
+        if kwargs:
+            return self._controller.get(kwargs['title']),200
+        return self._controller.get(),200
+class SearchView(MethodView):
+    def __init__(self, controller: BookController) -> None:
+        self._controller = controller
+
+    def post(self) -> tuple[list[dict], int]:
+        search_params = request.json
+        author = search_params.get('author', None)
+        kind = search_params.get('kind', None)
+        return self._controller.search(author=author, kind=kind), 200
